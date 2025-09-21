@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Propiedades</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+        }
+        .button-delete {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sistema de Gestión de Propiedades</h1>
+
+    <div id="propertyForm">
+        <h2>Agregar/Editar Propiedad</h2>
+        <form id="form">
+            <input type="hidden" id="propertyId">
+            <div class="form-group">
+                <label for="address">Dirección:</label>
+                <input type="text" id="address" required>
+            </div>
+            <div class="form-group">
+                <label for="price">Precio:</label>
+                <input type="number" id="price" required>
+            </div>
+            <div class="form-group">
+                <label for="size">Tamaño (m²):</label>
+                <input type="number" id="size" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Descripción:</label>
+                <input type="text" id="description" required>
+            </div>
+            <button type="submit" class="button">Guardar</button>
+        </form>
+    </div>
+
+    <h2>Listado de Propiedades</h2>
+    <table id="propertiesTable">
+        <thead>
+            <tr>
+                <th>Dirección</th>
+                <th>Precio</th>
+                <th>Tamaño</th>
+                <th>Descripción</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="propertiesList">
+        </tbody>
+    </table>
+
+    <script src="app.js"></script>
+</body>
+</html>

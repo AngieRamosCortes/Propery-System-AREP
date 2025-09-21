@@ -1,0 +1,4 @@
+com\example\propertysystem\model\Property.class
+com\example\propertysystem\PropertySystemApplication.class
+com\example\propertysystem\controller\PropertyController.class
+com\example\propertysystem\repository\PropertyRepository.class
