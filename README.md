@@ -1,6 +1,37 @@
 # Sistema de Gestión de Propiedades
 
-Un sistema CRUD simple para gestionar propiedades inmobiliarias. Este proyecto fue desarrollado como parte del curso de Arquitecturas Empresariales, implementando conceptos básicos de Spring Boot, JPA, y arquitectura cliente-servidor.
+Un sistema CRUD completo para la gestión de propiedades inmobiliarias, construido con Spring Boot y desplegado en AWS. Este sistema permite a los usuarios crear, leer, actualizar y eliminar listados de propiedades a través de una interfaz web intuitiva.
+
+![Visión General del Sistema](docs/images/system-overview.png)
+
+## Arquitectura del Sistema
+
+### Diagrama de Componentes
+```
+[Frontend (Web Estática)]
+        ↓
+    HTTP/REST
+        ↓
+[Backend (EC2)] → API Spring Boot
+        ↓
+    Protocolo MySQL
+        ↓
+[Base de Datos (RDS)] → Instancia MySQL
+```
+
+### Diseño de Clases
+```
+┌─────────────────┐     ┌──────────────────┐     ┌────────────────┐
+│     Property    │     │PropertyController │    │PropertyRepository│
+├─────────────────┤     ├──────────────────┤     ├────────────────┤
+│ -id: Long       │     │ -repository      │     │ +findAll()     │
+│ -address: String│ ←── │ +getAll()        │ ←── │ +findById()    │
+│ -price: Double  │     │ +getById()       │     │ +save()        │
+│ -size: Double   │     │ +create()        │     │ +delete()      │
+│ -description: String│ │ +update()        │     └────────────────┘
+└─────────────────┘     │ +delete()        │
+                        └──────────────────┘
+```
 
 ## Comenzando
 
@@ -8,16 +39,18 @@ Estas instrucciones te permitirán obtener una copia del proyecto en funcionamie
 
 ### Prerrequisitos
 
-Para ejecutar este proyecto necesitas:
-
 * Java 11 o superior
+* Maven 3.6+
 * MySQL 8.0
-* Maven 3.6 o superior
-* Un IDE (recomendado Visual Studio Code con las extensiones de Java y Spring Boot)
+* Cuenta AWS con permisos para:
+  - EC2
+  - RDS
+  - Grupos de Seguridad
+* AWS CLI instalado y configurado
 
-### Instalación
+### Local Development Setup
 
-1. Clona el repositorio en tu máquina local:
+1. Clone the repository:
 ```bash
 git clone https://github.com/AngieRamosCortes/Propery-System-AREP.git
 ```
@@ -35,18 +68,20 @@ cd propertySystem
 ```bash
 mvn clean install
 ```
+![Funcionamiento compilación](docs/images/mvn.png)
 
 5. Ejecuta la aplicación:
 ```bash
 mvn spring-boot:run
 ```
+![Funcionamiento ejecución en sistema local](docs/images/mvnspring-bootrun.png)
 
 6. Abre tu navegador y visita:
 ```
 http://localhost:8080
 ```
 
-## Estructura del Proyecto 
+## Estructura del Proyecto
 
 ```
 src/
@@ -70,6 +105,8 @@ src/
 │           └── app.js
 ```
 
+## API Documentation
+
 ## Endpoints de la API 
 
 * GET `/api/properties` - Obtener todas las propiedades
@@ -83,42 +120,178 @@ src/
 ```json
 {
     "address": "Calle 123 #45-67",
-    "price": 250000.00,
-    "size": 120.5,
+    "price": 250000000,
+    "size": 120,
     "description": "Casa de 3 habitaciones con jardín"
 }
 ```
 
-## Despliegue en AWS 
+## Instrucciones de Despliegue en AWS
 
-Para desplegar la aplicación en AWS:
+### 1. Configuración de la Base de Datos (RDS)
 
-1. Crea una instancia EC2 con Amazon Linux 2
-2. Instala Java y MySQL en la instancia
-3. Configura las reglas de seguridad para permitir el tráfico en los puertos 8080 y 3306
-4. Sube el archivo JAR generado a la instancia
-5. Ejecuta la aplicación usando:
+1. Crear instancia RDS:
 ```bash
-java -jar property-system.jar
+aws rds create-db-instance \
+    --db-instance-identifier property-db \
+    --db-instance-class db.t2.micro \
+    --engine mysql \
+    --master-username admin \
+    --master-user-password rootroot \
+    --allocated-storage 20
 ```
 
-## Construido con 🛠️
+2. Configurar Grupo de Seguridad RDS:
+```bash
+aws ec2 create-security-group \
+    --group-name rds-sg \
+    --description "Grupo de Seguridad para RDS"
 
-* [Spring Boot](https://spring.io/projects/spring-boot) - El framework web usado
-* [Maven](https://maven.apache.org/) - Manejador de dependencias
-* [MySQL](https://www.mysql.com/) - Sistema de gestión de base de datos
-* [JPA/Hibernate](https://hibernate.org/) - Framework de persistencia
-* [JavaScript](https://developer.mozilla.org/es/docs/Web/JavaScript) - Para la interfaz de usuario
+aws ec2 authorize-security-group-ingress \
+    --group-name rds-sg \
+    --protocol tcp \
+    --port 3306 \
+    --cidr 0.0.0.0/0
+```
+![Base de datos RDS](docs/images/bdRDS.png)
 
-## Autores 
 
-* **Angie Julieth Ramos Cortes** - Desarrollo completo
+### 2. Despliegue del Backend (EC2)
 
-## Licencia 
+1. Crear instancia EC2:
+```bash
+aws ec2 run-instances \
+    --image-id ami-0c55b159cbfafe1f0 \
+    --instance-type t2.micro \
+    --key-name property-key \
+    --security-groups backend-sg
+```
 
-Este proyecto está bajo la Licencia MIT - mira el archivo [LICENSE.md](LICENSE.md) para detalles
+2. Configurar Grupo de Seguridad EC2:
+```bash
+aws ec2 create-security-group \
+    --group-name backend-sg \
+    --description "Grupo de Seguridad para Backend"
 
-## Agradecimientos 
+aws ec2 authorize-security-group-ingress \
+    --group-name backend-sg \
+    --protocol tcp \
+    --port 8080 \
+    --cidr 0.0.0.0/0
+```
 
-* Profesor del curso de Arquitecturas Empresariales
-* Stack Overflow y la comunidad de Spring por su documentación y ejemplos
+3. Desplegar aplicación:
+```bash
+# Conectar a la instancia EC2
+ssh -i C:\Users\angie\Downloads\Keyproperty-system-backend.pem ec2-user@ec2-34-230-70-39.compute-1.amazonaws.com
+
+
+# Ingresamos al DNS público de la instancia
+http://ec2-34-230-70-39.compute-1.amazonaws.com:8080/
+```
+![Instancia EC2](docs/images/EC2Instance.png)
+![Instancia EC2-2](docs/images/EC2Instance2.png)
+![Instancia EC2-3](docs/images/EC2Deployment.png)
+
+## Capturas de Pantalla Funcionalidades
+
+### Lista de Propiedades
+![Lista de Propiedades](docs/images/property-list.png)
+
+### Formulario de Agregar Propiedad
+![Agregar Propiedad](docs/images/add-property.png)
+
+### Editar Propiedad
+![Editar Propiedad](docs/images/edit-property.png)
+
+### Eliminar Propiedad
+![Eliminar Propiedad](docs/images/delete-property.png)
+![Eliminar Propiedad](docs/images/delete-propertyR.png)
+
+### Actualizar Propiedad
+![Eliminar Propiedad](docs/images/update-property.png)
+![Eliminar Propiedad](docs/images/update-propertyR.png)
+
+### Validaciones de campos obligatorios
+Si algún campo no se llena no se puede agregar una propiedad
+![Validaciones de campos obligatorios](docs/images/obligatory.png)
+![Validaciones de campos obligatorios](docs/images/obligatory1.png)
+![Validaciones de campos obligatorios](docs/images/obligatory2.png)
+![Validaciones de campos obligatorios](docs/images/obligatory3.png)
+
+### Resumen
+
+Frontend Requirements ✅
+
+1. User Interface
+- ✅ Forms for property information in index.html
+- ✅ List view with CRUD options
+- ✅ Client-side validation (HTML5 required attributes)
+- ✅ Fetch API usage in app.js
+
+Backend Requirements ✅
+
+1. REST Endpoints in PropertyController.java
+
+- ✅ POST /api/properties
+- ✅ GET /api/properties and /api/properties/{id}
+- ✅ PUT /api/properties/{id}
+- ✅ DELETE /api/properties/{id}
+- ✅ Error handling implemented
+
+2. Property Model
+
+- ✅ ID (auto-generated)
+- ✅ Address
+- ✅ Price
+- ✅ Size
+- ✅ Description
+
+Database Requirements ✅
+
+1. MySQL Configuration
+- ✅ Table structure in schema.sql
+- ✅ JPA/Hibernate mapping
+- ✅ CRUD persistence operations
+
+AWS Deployment ✅
+
+- ✅ Backend deployed on EC2
+- ✅ Database deployed on RDS
+- ✅ Services properly separated
+
+- ✅ Screenshots
+
+README.md Content ✅
+
+- ✅ Project Summary
+- ✅ System Architecture
+- ✅ Class Design
+- ✅ AWS Deployment Instructions
+- ✅ Screenshots
+
+Video: A short video demonstrating the system running, including examples of create, read, update, and delete operations. The video should show how to deploy the system ✅
+
+
+## Construido Con
+
+* [Spring Boot](https://spring.io/projects/spring-boot) - Framework Backend
+* [Maven](https://maven.apache.org/) - Gestión de Dependencias
+* [MySQL](https://www.mysql.com/) - Base de Datos
+* [AWS](https://aws.amazon.com/) - Plataforma en la Nube
+  - EC2 para Backend
+  - RDS para Base de Datos
+
+## Autora
+
+* **Angie Julieth Ramos Cortes** - *Desarrollo Completo* - [AngieRamosCortes](https://github.com/AngieRamosCortes)
+
+## Licencia
+
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.md](LICENSE.md) para más detalles.
+
+## Agradecimientos
+
+* Al profesor del curso de Arquitecturas Empresariales por su guía
+* Documentación de Spring Boot y AWS
+* Comunidad de Stack Overflow por su valiosa ayuda

@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8080/api/properties';
+const API_URL = 'http://ec2-34-230-70-39.compute-1.amazonaws.com:8080/api/properties';
 let editingId = null;
 
 const form = document.getElementById('form');
