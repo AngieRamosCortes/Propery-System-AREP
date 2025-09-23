@@ -219,6 +219,10 @@ Si algún campo no se llena no se puede agregar una propiedad
 ![Validaciones de campos obligatorios](docs/images/obligatory2.png)
 ![Validaciones de campos obligatorios](docs/images/obligatory3.png)
 
+Nota: descargamos también MySQL en nuestro PC y con podemos acceder a localhost:8080
+<img width="1919" height="893" alt="image" src="https://github.com/user-attachments/assets/e8722a7d-ab0f-4cd0-b59c-05ea50c855c7" />
+
+
 ### Resumen
 
 Frontend Requirements ✅
